@@ -10,71 +10,81 @@
 <body>
 	<h1>WebAuthn Example</h1>
 	<button id="registerButton">Register YubiKey</button>
-	<button id="loginButton">Login with YubiKey</button>
+	<!-- Add an element to display the challenge for debugging purposes -->
+	<div id="challengeDisplay"></div>
 
 	<script>
 		const BASEURL = "http://localhost:3000";
-
-		
-
 		document.addEventListener('DOMContentLoaded', () => {
 			const registerButton = document.getElementById('registerButton');
-			const loginButton = document.getElementById('loginButton');
+			const challengeDisplay = document.getElementById('challengeDisplay');
 
-			let publicKey;
-
-			// Function to register a YubiKey
-			async function registerYubiKey() {
+			registerButton.addEventListener('click', async () => {
 				try {
-					// Request a challenge from the server
-					const response = await fetch(BASEURL +'/register', { method: 'POST' });
-					const challenge = await response.json();
+					// Replace 'yourUserId' with the actual user ID or fetch it dynamically
+					const userId = 'yourUserId';
 
-					// Create a new credential for the YubiKey
-					publicKey = await navigator.credentials.create({
-						publicKey: {
-							challenge: Uint8Array.from(challenge),
-							rp: { name: 'Your Web Service' },
-							user: { id: Uint8Array.from([1]), name: 'user@example.com', displayName: 'User' },
-							pubKeyCredParams: [{ type: 'public-key', alg: -7 }], // YubiKey's preferred algorithm
-							authenticatorSelection: { authenticatorAttachment: 'cross-platform' },
-							attestation: 'direct'
-						}
+					// Request a challenge from the server
+					const response = await fetch(BASEURL + '/register', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ userId }),
 					});
 
-					console.log('YubiKey registered successfully:', publicKey);
+					const { challenge } = await response.json();
+
+					// Display the challenge for debugging purposes
+					challengeDisplay.innerText = `Challenge: ${challenge}`;
+
+					// Use the challenge in the WebAuthn registration process
+					const credential = await navigator.credentials.create({
+						publicKey: {
+							challenge: Uint8Array.from(base64url.toBuffer(challenge), c => c.charCodeAt(0)),
+							rp: { name: 'Your Web Service' },
+							user: { id: Uint8Array.from(userId), name: userId, displayName: userId },
+							pubKeyCredParams: [
+								{ type: 'public-key', alg: -7 }, // Use the desired algorithm, -7 represents ES256
+							],
+							attestation: 'direct',
+							authenticatorSelection: { authenticatorAttachment: 'cross-platform' },
+						},
+					});
+
+					// Send the registration response to the server
+					await fetch(BASEURL+'/verify-registration', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							userId,
+							id: credential.id,
+							rawId: base64url.encode(credential.rawId),
+							response: {
+								attestationObject: base64url.encode(credential.response.attestationObject),
+								clientDataJSON: base64url.encode(credential.response.clientDataJSON),
+							},
+							type: credential.type,
+						}),
+					});
+
+					console.log('YubiKey registered successfully:', credential);
 
 				} catch (error) {
 					console.error('Error registering YubiKey:', error);
 				}
-			}
-
-			// Function to login with the YubiKey
-			async function loginWithYubiKey() {
-				try {
-					// Request a challenge from the server
-					const response = await fetch(BASEURL + '/verify', { method: 'POST' });
-					const challenge = await response.json();
-
-					// Create an assertion for the YubiKey
-					const assertion = await navigator.credentials.get({
-						publicKey: {
-							challenge: Uint8Array.from(challenge),
-							rpId: 'YourWebDomain.com', // Update with your web domain
-							allowCredentials: [{ type: 'public-key', id: publicKey.rawId }],
-						}
-					});
-
-					console.log('YubiKey authentication successful:', assertion);
-
-				} catch (error) {
-					console.error('Error logging in with YubiKey:', error);
-				}
-			}
-
-			registerButton.addEventListener('click', registerYubiKey);
-			loginButton.addEventListener('click', loginWithYubiKey);
+			});
 		});
+	</script>
+
+	<script>
+		// Include the base64url library for encoding and decoding
+		const base64url = {
+			toBuffer: (b64) => Uint8Array.from(atob(b64), c => c.charCodeAt(0)),
+			encode: (arr) => btoa(String.fromCharCode.apply(null, new Uint8Array(arr))),
+		};
 	</script>
 </body>
 
