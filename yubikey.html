@@ -13,6 +13,10 @@
 	<button id="loginButton">Login with YubiKey</button>
 
 	<script>
+		const BASEURL = "http://localhost:3000";
+
+		
+
 		document.addEventListener('DOMContentLoaded', () => {
 			const registerButton = document.getElementById('registerButton');
 			const loginButton = document.getElementById('loginButton');
@@ -23,7 +27,7 @@
 			async function registerYubiKey() {
 				try {
 					// Request a challenge from the server
-					const response = await fetch('/generateChallenge', { method: 'POST' });
+					const response = await fetch(BASEURL +'/register', { method: 'POST' });
 					const challenge = await response.json();
 
 					// Create a new credential for the YubiKey
@@ -49,7 +53,7 @@
 			async function loginWithYubiKey() {
 				try {
 					// Request a challenge from the server
-					const response = await fetch('/generateChallenge', { method: 'POST' });
+					const response = await fetch(BASEURL + '/verify', { method: 'POST' });
 					const challenge = await response.json();
 
 					// Create an assertion for the YubiKey
