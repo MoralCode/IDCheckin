@@ -35,7 +35,7 @@ app.post('/register', (req, res) => {
 });
 
 // Endpoint for completing WebAuthn registration
-app.post('/verify', (req, res) => {
+app.post('/verify-registration', (req, res) => {
     const userId = req.body.userId;
     const user = users[userId];
 
