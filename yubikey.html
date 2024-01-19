@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>YubiKey Information</title>
+</head>
+
+<body>
+	<h1>YubiKey Information</h1>
+	<button id="connectButton">Connect to YubiKey</button>
+	<div id="yubiKeyInfo"></div>
+
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			const connectButton = document.getElementById('connectButton');
+			const yubiKeyInfoDiv = document.getElementById('yubiKeyInfo');
+
+			let usbDevice;
+
+			connectButton.addEventListener('click', async () => {
+				try {
+					// Request access to YubiKey using WebUSB API
+					usbDevice = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1050 }] });
+
+					// Open the YubiKey
+					await usbDevice.open();
+					await usbDevice.selectConfiguration(1);
+					await usbDevice.claimInterface(1);
+
+					// Get information from the YubiKey
+					const result = await usbDevice.controlTransferIn(
+						{ requestType: 'class', recipient: 'interface', request: 0x06, value: 0x0300, index: 1 },
+						37
+					);
+
+					// Display information
+					const decoder = new TextDecoder('utf-8');
+					const yubiKeyInfo = decoder.decode(result.data);
+					yubiKeyInfoDiv.innerHTML = `<p>${yubiKeyInfo}</p>`;
+
+				} catch (error) {
+					console.error('Error connecting to YubiKey:', error);
+					yubiKeyInfoDiv.innerHTML = '<p>Error connecting to YubiKey. Please try again.</p>';
+				}
+			});
+		});
+	</script>
+
+	<script>
+		// Polyfill for navigator.usb on browsers that do not support WebUSB natively
+		if (!navigator.usb) {
+			document.write('<script src="https://cdn.jsdelivr.net/npm/webusb@1.0.22/dist/webusb.polyfill.js"></' + 'script>');
+		}
+	</script>
+</body>
+
+</html>
