@@ -4,55 +4,73 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>YubiKey Information</title>
+	<title>WebAuthn Example</title>
 </head>
 
 <body>
-	<h1>YubiKey Information</h1>
-	<button id="connectButton">Connect to YubiKey</button>
-	<div id="yubiKeyInfo"></div>
+	<h1>WebAuthn Example</h1>
+	<button id="registerButton">Register YubiKey</button>
+	<button id="loginButton">Login with YubiKey</button>
 
 	<script>
 		document.addEventListener('DOMContentLoaded', () => {
-			const connectButton = document.getElementById('connectButton');
-			const yubiKeyInfoDiv = document.getElementById('yubiKeyInfo');
+			const registerButton = document.getElementById('registerButton');
+			const loginButton = document.getElementById('loginButton');
 
-			let usbDevice;
+			let publicKey;
 
-			connectButton.addEventListener('click', async () => {
+			// Function to register a YubiKey
+			async function registerYubiKey() {
 				try {
-					// Request access to YubiKey using WebUSB API
-					usbDevice = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1050 }] });
+					// Request a challenge from the server
+					const response = await fetch('/generateChallenge', { method: 'POST' });
+					const challenge = await response.json();
 
-					// Open the YubiKey
-					await usbDevice.open();
-					await usbDevice.selectConfiguration(1);
-					await usbDevice.claimInterface(1);
+					// Create a new credential for the YubiKey
+					publicKey = await navigator.credentials.create({
+						publicKey: {
+							challenge: Uint8Array.from(challenge),
+							rp: { name: 'Your Web Service' },
+							user: { id: Uint8Array.from([1]), name: 'user@example.com', displayName: 'User' },
+							pubKeyCredParams: [{ type: 'public-key', alg: -7 }], // YubiKey's preferred algorithm
+							authenticatorSelection: { authenticatorAttachment: 'cross-platform' },
+							attestation: 'direct'
+						}
+					});
 
-					// Get information from the YubiKey
-					const result = await usbDevice.controlTransferIn(
-						{ requestType: 'class', recipient: 'interface', request: 0x06, value: 0x0300, index: 1 },
-						37
-					);
-
-					// Display information
-					const decoder = new TextDecoder('utf-8');
-					const yubiKeyInfo = decoder.decode(result.data);
-					yubiKeyInfoDiv.innerHTML = `<p>${yubiKeyInfo}</p>`;
+					console.log('YubiKey registered successfully:', publicKey);
 
 				} catch (error) {
-					console.error('Error connecting to YubiKey:', error);
-					yubiKeyInfoDiv.innerHTML = '<p>Error connecting to YubiKey. Please try again.</p>';
+					console.error('Error registering YubiKey:', error);
 				}
-			});
-		});
-	</script>
+			}
 
-	<script>
-		// Polyfill for navigator.usb on browsers that do not support WebUSB natively
-		if (!navigator.usb) {
-			document.write('<script src="https://cdn.jsdelivr.net/npm/webusb@1.0.22/dist/webusb.polyfill.js"></' + 'script>');
-		}
+			// Function to login with the YubiKey
+			async function loginWithYubiKey() {
+				try {
+					// Request a challenge from the server
+					const response = await fetch('/generateChallenge', { method: 'POST' });
+					const challenge = await response.json();
+
+					// Create an assertion for the YubiKey
+					const assertion = await navigator.credentials.get({
+						publicKey: {
+							challenge: Uint8Array.from(challenge),
+							rpId: 'YourWebDomain.com', // Update with your web domain
+							allowCredentials: [{ type: 'public-key', id: publicKey.rawId }],
+						}
+					});
+
+					console.log('YubiKey authentication successful:', assertion);
+
+				} catch (error) {
+					console.error('Error logging in with YubiKey:', error);
+				}
+			}
+
+			registerButton.addEventListener('click', registerYubiKey);
+			loginButton.addEventListener('click', loginWithYubiKey);
+		});
 	</script>
 </body>
 
