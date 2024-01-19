@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>NFC Reader</title>
+</head>
+
+<body>
+	<h1>NFC Reader</h1>
+	<button onclick="startNFC()">Start NFC Reading</button>
+	<p id="nfcData"></p>
+
+	<script>
+		async function startNFC() {
+			try {
+				// Check if the browser supports the Web NFC API
+				if ('NDEFReader' in window) {
+					const reader = new NDEFReader();
+
+					// Start reading NFC tags
+					await reader.scan();
+
+					reader.addEventListener('reading', event => {
+						const badgeId = event.message.records[0].data;
+
+						// Display the badge ID in the paragraph
+						document.getElementById('nfcData').textContent = `Badge ID: ${badgeId}`;
+					});
+
+					reader.addEventListener('error', error => {
+						console.error('NFC error:', error);
+					});
+
+					console.log('NFC reading started');
+				} else {
+					console.error('Web NFC API is not supported in this browser');
+				}
+			} catch (error) {
+				console.error('Error starting NFC reading:', error);
+			}
+		}
+	</script>
+</body>
+
+</html>
