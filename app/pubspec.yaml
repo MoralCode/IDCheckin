@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_nfc_kit: ^1.1.1
+  nfc_in_flutter: ^4.1.0
   http: ^0.13.3
 
 

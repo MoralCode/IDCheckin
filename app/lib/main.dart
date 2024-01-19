@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_nfc_kit/flutter_nfc_kit.dart';
-import 'package:http/http.dart' as http;
+import 'package:nfc_in_flutter/nfc_in_flutter.dart';
 
 void main() {
   runApp(MyApp());
@@ -30,20 +29,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> initNFC() async {
-    FlutterNfcKit.onNfcError().listen((error) {
-      print('NFC Error: $error');
-    });
+    NfcData data = await Nfc.startSession(
+      alertMessageIOS: 'Approach the NFC tag',
+      onDiscovered: (NfcData data) async {
+        setState(() {
+          nfcData = String.fromCharCodes(data.content);
+        });
 
-    FlutterNfcKit.onNdef().listen((NdefMessage message) {
-      final record = message.records.first;
-      setState(() {
-        nfcData = String.fromCharCodes(record.payload);
-      });
-
-      sendDataToServer(nfcData);
-    });
-
-    await FlutterNfcKit.start();
+        sendDataToServer(nfcData);
+      },
+    );
+    print('NFC session started: $data');
   }
 
   Future<void> sendDataToServer(String data) async {
@@ -79,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    FlutterNfcKit.stop();
+    Nfc.stopSession();
     super.dispose();
   }
 }
