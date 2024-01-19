@@ -1,6 +1,7 @@
 const express = require('express');
 const webauthn = require('webauthn');
 const crypto = require('crypto');
+const base64url = require('base64url');
 
 const app = express();
 const port = 3000;
@@ -12,7 +13,7 @@ const users = {};
 
 // Generate a challenge for WebAuthn registration or authentication
 function generateChallenge() {
-	return crypto.randomBytes(32).toString('base64');
+    return base64url(crypto.randomBytes(32));
 }
 
 // Endpoint for initiating WebAuthn registration
