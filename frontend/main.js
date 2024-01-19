@@ -1,6 +1,6 @@
 const BASEURL = "http://localhost:3000";
 
-function readNFC() {
+async function readNFC() {
     // Simulate reading NFC badge ID (replace this with actual NFC reading logic)
     const badgeId = '123456789';
 
@@ -8,7 +8,7 @@ function readNFC() {
     document.getElementById('badgeId').value = badgeId;
 }
 
-function fetchUsername(badgeId) {
+async function fetchUsername(badgeId) {
 
     // Make a GET request to the server to fetch the username
     return fetch(BASEURL + `/username/${badgeId}`)
