@@ -8,21 +8,17 @@ function readNFC() {
     document.getElementById('badgeId').value = badgeId;
 }
 
-function fetchUsername() {
-    const badgeId = document.getElementById('badgeId').value;
+function fetchUsername(badgeId) {
 
     // Make a GET request to the server to fetch the username
-    fetch(BASEURL + `/username/${badgeId}`)
+    return fetch(BASEURL + `/username/${badgeId}`)
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
             return response.json();
         })
-        .then(data => {
-            // Display the username in the result paragraph
-            document.getElementById('result').textContent = `Username: ${data.username}`;
-        })
+        .then(data => data.username)
         .catch(error => {
             console.error('Error fetching username:', error);
             document.getElementById('result').textContent = 'Error fetching username';
