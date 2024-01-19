@@ -43,7 +43,7 @@
 						publicKey: {
 							challenge: new TextEncoder().encode(challenge),
 							rp: { name: 'Your Web Service' },
-							user: { id: Uint8Array.from(userId, c => c.charCodeAt(0)) },
+							user: { name: "bob", id: Uint8Array.from(userId, c => c.charCodeAt(0)), displayName:"Bob" },
 							pubKeyCredParams: [
 								{ type: 'public-key', alg: -7 }, // Use the desired algorithm, -7 represents ES256
 							],
