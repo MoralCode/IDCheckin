@@ -6,6 +6,11 @@ async function readNFC() {
 
     // Display badge ID in the input field
     document.getElementById('badgeId').value = badgeId;
+
+    await fetchUsername(badgeId).then((value) => {
+        document.getElementById("userName").value = value;
+
+    });
 }
 
 async function fetchUsername(badgeId) {
