@@ -32,6 +32,27 @@ app.post('/attendance', (req, res) => {
     res.json({ success: true });
 });
 
+
+// Endpoint to get username by badge ID
+app.get('/username/:badgeId', (req, res) => {
+    const { badgeId } = req.params;
+
+    // Query the 'attendance' table for the username associated with the badge ID
+    db.get('SELECT userName FROM attendance WHERE badgeId = ?', [badgeId], (err, row) => {
+        if (err) {
+            console.error('Error querying database:', err);
+            res.status(500).json({ error: 'Error querying database' });
+        } else {
+            if (row) {
+                res.json({ username: row.userName });
+            } else {
+                res.status(404).json({ error: 'User not found' });
+            }
+        }
+    });
+});
+
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });
