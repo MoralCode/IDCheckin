@@ -1,7 +1,3 @@
-document.addEventListener('DOMContentLoaded', function () {
-    // Function to handle NFC reading (simulate with a button click for demo purposes)
-    document.querySelector('button').addEventListener('click', readNFC);
-});
 
 function readNFC() {
     // Simulate reading NFC badge ID (replace this with actual NFC reading logic)
