@@ -41,9 +41,9 @@
 					// Use the challenge in the WebAuthn registration process
 					const credential = await navigator.credentials.create({
 						publicKey: {
-							challenge: Uint8Array.from(base64url.toBuffer(challenge), c => c.charCodeAt(0)),
+							challenge: new TextEncoder().encode(challenge),
 							rp: { name: 'Your Web Service' },
-							user: { id: Uint8Array.from(userId), name: userId, displayName: userId },
+							user: { id: Uint8Array.from(userId, c => c.charCodeAt(0)) },
 							pubKeyCredParams: [
 								{ type: 'public-key', alg: -7 }, // Use the desired algorithm, -7 represents ES256
 							],
@@ -61,10 +61,10 @@
 						body: JSON.stringify({
 							userId,
 							id: credential.id,
-							rawId: base64url.encode(credential.rawId),
+							rawId: Array.from(new Uint8Array(credential.rawId), c => String.fromCharCode(c)).join(''),
 							response: {
-								attestationObject: base64url.encode(credential.response.attestationObject),
-								clientDataJSON: base64url.encode(credential.response.clientDataJSON),
+								attestationObject: Array.from(new Uint8Array(credential.response.attestationObject), c => String.fromCharCode(c)).join(''),
+								clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON), c => String.fromCharCode(c)).join(''),
 							},
 							type: credential.type,
 						}),
@@ -77,14 +77,6 @@
 				}
 			});
 		});
-	</script>
-
-	<script>
-		// Include the base64url library for encoding and decoding
-		const base64url = {
-			toBuffer: (b64) => Uint8Array.from(atob(b64), c => c.charCodeAt(0)),
-			encode: (arr) => btoa(String.fromCharCode.apply(null, new Uint8Array(arr))),
-		};
 	</script>
 </body>
 
