@@ -1,3 +1,4 @@
+const BASEURL = "http://localhost:3000";
 
 function readNFC() {
     // Simulate reading NFC badge ID (replace this with actual NFC reading logic)
@@ -39,7 +40,7 @@ function submitAttendance() {
         // Example: POST /attendance
         // You'll need to implement the server-side logic using Node.js, Express, and MongoDB
         // Here, I'm using a placeholder URL, replace it with your actual server URL
-        const url = 'http://localhost:3000/attendance';
+        const url = BASEURL + '/attendance';
 
         fetch(url, {
             method: 'POST',
