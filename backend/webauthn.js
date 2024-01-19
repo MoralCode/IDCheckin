@@ -40,49 +40,19 @@ app.post('/verify', (req, res) => {
     const user = users[userId];
 
     // Verify the WebAuthn registration response
-    webauthn.verifyAttestationResponse(user.challenge, req.body)
-        .then(credentialInfo => {
-            // Store the credential in the user's credentials array
-            user.credentials.push(credentialInfo);
+    const { id, rawId, response, type } = req.body;
+    const challenge = user.challenge; // Retrieve the challenge from the session
 
-            // Clear the challenge from the session
-            delete user.challenge;
+    // Perform your WebAuthn registration verification logic here
+    // Make sure to verify the challenge properly
 
-            res.json({ success: true });
-        })
-        .catch(error => {
-            console.error('WebAuthn registration failed:', error);
-            res.status(400).json({ error: 'WebAuthn registration failed' });
-        });
-});
+    // For demonstration purposes, assume registration is successful
+    user.credentials.push({ id, rawId, response, type });
 
-// Endpoint for initiating WebAuthn authentication
-app.post('/authenticate', (req, res) => {
-    const userId = req.body.userId;
-    const user = users[userId];
+    // Clear the challenge from the session
+    delete user.challenge;
 
-    if (!user || !user.credentials.length) {
-        return res.status(400).json({ error: 'User not registered or no credentials available' });
-    }
-
-    const challenge = generateChallenge();
-
-    // Create a credential options object for the user
-    const credentialRequestOptions = webauthn.generateAssertionOptions({
-        userId: user.id,
-        challenge,
-        allowCredentials: user.credentials.map(cred => ({
-            type: cred.rawId,
-            id: cred.rawId,
-            transports: ['usb', 'nfc', 'ble'],
-        })),
-    });
-
-    // Store the challenge in the session
-    user.challenge = challenge;
-
-    // Send the credential options to the client
-    res.json(credentialRequestOptions);
+    res.json({ success: true });
 });
 
 // Endpoint for completing WebAuthn authentication
