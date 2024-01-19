@@ -1,41 +1,31 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mongoose = require('mongoose');
+const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const port = 3000;
 
-// Replace 'your-database-url' with your actual MongoDB database URL
-mongoose.connect('mongodb://your-database-url/attendance', { useNewUrlParser: true, useUnifiedTopology: true });
+// Connect to SQLite database (creates a new file named 'attendance.db' in the project folder)
+const db = new sqlite3.Database('attendance.db');
 
-const attendanceSchema = new mongoose.Schema({
-    badgeId: String,
-    userName: String,
+// Create 'attendance' table if it doesn't exist
+db.serialize(() => {
+    db.run('CREATE TABLE IF NOT EXISTS attendance (badgeId TEXT, userName TEXT)');
 });
-
-const Attendance = mongoose.model('Attendance', attendanceSchema);
 
 app.use(bodyParser.json());
 
 app.post('/attendance', (req, res) => {
     const { badgeId, userName } = req.body;
 
-    // Create a new attendance record
-    const attendance = new Attendance({
-        badgeId,
-        userName,
-    });
+    // Insert a new attendance record into the 'attendance' table
+    const stmt = db.prepare('INSERT INTO attendance VALUES (?, ?)');
+    stmt.run(badgeId, userName);
+    stmt.finalize();
 
-    // Save the record to the database
-    attendance.save((err) => {
-        if (err) {
-            console.error('Error saving attendance:', err);
-            res.status(500).json({ error: 'Error saving attendance' });
-        } else {
-            console.log('Attendance saved successfully');
-            res.json({ success: true });
-        }
-    });
+    console.log('Attendance saved successfully');
+
+    res.json({ success: true });
 });
 
 app.listen(port, () => {
