@@ -29,19 +29,36 @@ app.post('/register', (req, res) => {
     const challenge = generateChallenge();
     const user = users[userId];
 
-    // Create a credential options object for the user
-    const credentialCreationOptions = webauthn.generateAttestationOptions({
-        userId: user.id,
-        userName: user.id,
-        displayName: user.id,
-        attestationType: 'direct',
-    });
+    // Create options for WebAuthn registration
+    const options = {
+        publicKey: {
+            challenge: Buffer.from(challenge, 'base64'),
+            rp: {
+                name: 'Your Web Service',
+            },
+            user: {
+                id: Buffer.from(userId),
+                name: user.id,
+                displayName: user.id,
+            },
+            pubKeyCredParams: [
+                {
+                    type: 'public-key',
+                    alg: -7, // Use the desired algorithm, -7 represents ES256
+                },
+            ],
+            attestation: 'direct',
+            authenticatorSelection: {
+                authenticatorAttachment: 'cross-platform',
+            },
+        },
+    };
 
     // Store the challenge in the session
     user.challenge = challenge;
 
     // Send the credential options to the client
-    res.json(credentialCreationOptions);
+    res.json(options);
 });
 
 // Endpoint for completing WebAuthn registration
