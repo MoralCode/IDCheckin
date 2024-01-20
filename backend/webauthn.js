@@ -74,6 +74,37 @@ app.post('/verify-authentication', (req, res) => {
         });
 });
 
+// Endpoint for initiating WebAuthn authentication
+app.post('/authenticate', (req, res) => {
+    const userId = req.body.userId;
+    const user = users[userId];
+
+    if (!user || !user.credentials.length) {
+        return res.status(400).json({ error: 'User not registered or no credentials available' });
+    }
+
+    const challenge = generateChallenge();
+
+    // Create options for WebAuthn authentication
+    const options = {
+        publicKey: {
+            challenge: Buffer.from(challenge, 'base64'),
+            rpId: 'localhost', // Replace with your actual domain
+            allowCredentials: user.credentials.map(cred => ({
+                type: 'public-key',
+                id: cred.rawId,
+            })),
+            userVerification: 'required',
+        },
+    };
+
+    // Store the challenge in the session
+    user.challenge = challenge;
+
+    // Send the authentication options to the client
+    res.json(options);
+});
+
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
 });

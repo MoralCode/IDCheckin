@@ -10,6 +10,8 @@
 <body>
 	<h1>WebAuthn Example</h1>
 	<button id="registerButton">Register YubiKey</button>
+	<button id="authenticateButton">Authenticate</button>
+
 	<!-- Add an element to display the challenge for debugging purposes -->
 	<div id="challengeDisplay"></div>
 
@@ -76,7 +78,65 @@
 					console.error('Error registering YubiKey:', error);
 				}
 			});
+			
 		});
+
+		const authenticateButton = document.getElementById('authenticateButton');
+
+			authenticateButton.addEventListener('click', async () => {
+				try {
+					// Replace 'yourUserId' with the actual user ID or fetch it dynamically
+					const userId = 'yourUserId';
+
+					// Request a challenge from the server for WebAuthn authentication
+					const response = await fetch(BASEURL+'/authenticate', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ userId }),
+					});
+
+					const { challenge } = await response.json();
+
+					// Use the challenge in the WebAuthn authentication process
+					const credential = await navigator.credentials.get({
+						publicKey: {
+							challenge: new TextEncoder().encode(challenge),
+							rpId: window.location.hostname,
+							allowCredentials: [{
+								type: 'public-key',
+								id: Uint8Array.from(base64url.toBuffer(credentialId)), // Get the credentialId from your user data
+							}],
+						},
+					});
+
+					// Send the authentication response to the server
+					await fetch(BASEURL+'/verify-authentication', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({
+							userId,
+							id: credential.id,
+							rawId: Array.from(new Uint8Array(credential.rawId), c => String.fromCharCode(c)).join(''),
+							response: {
+								authenticatorData: Array.from(new Uint8Array(credential.response.authenticatorData), c => String.fromCharCode(c)).join(''),
+								clientDataJSON: Array.from(new Uint8Array(credential.response.clientDataJSON), c => String.fromCharCode(c)).join(''),
+								signature: Array.from(new Uint8Array(credential.response.signature), c => String.fromCharCode(c)).join(''),
+								userHandle: Array.from(new Uint8Array(credential.response.userHandle), c => String.fromCharCode(c)).join(''),
+							},
+							type: credential.type,
+						}),
+					});
+
+					console.log('YubiKey authentication successful:', credential);
+
+				} catch (error) {
+					console.error('Error authenticating with YubiKey:', error);
+				}
+			});
 	</script>
 </body>
 
